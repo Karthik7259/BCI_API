@@ -7,7 +7,8 @@ This project provides a Brain-Computer Interface (BCI) data collection system wi
 - Real-time EEG data collection from LEHeadband device
 - Processing of raw EEG signals into spectral bands (alpha, beta, theta)
 - Approximate Entropy (ApEn) calculation for each band
-- REST API endpoint for accessing processed data
+- REST API endpoint for accessing processed data with history tracking
+- Historical data storage (last 10 readings)
 - CORS support for frontend integration
 - Real-time electrode resistance monitoring
 - Automatic calibration process
@@ -31,8 +32,13 @@ You also need the following specialized packages:
 ## Project Structure
 
 - `bciapi.py` - Main API server and BCI processing logic
+  - Real-time data processing
+  - Flask API endpoints
+  - Device connection management
+  - Historical data tracking
 - `emo.py` - Standalone EEG data collection script with CSV logging
 - `logs/` - Directory containing SDK logs
+  - `sdk_log.log` - Device and processing logs
 
 ## Usage
 
@@ -51,14 +57,23 @@ The server will:
 
 ### API Endpoints
 
-- `GET /api/data` - Returns the latest processed EEG data
+- `GET /api/data` - Returns an array of the last 10 EEG readings
   ```json
-  {
-    "timestamp": "2025-05-22T10:30:45.123456",
-    "alpha": 0.75,
-    "beta": 0.45,
-    "theta": 0.30
-  }
+  [
+    {
+      "timestamp": "2025-05-23T10:30:45.123456",
+      "alpha": 0.75,
+      "beta": 0.45,
+      "theta": 0.30
+    },
+    {
+      "timestamp": "2025-05-23T10:30:44.123456",
+      "alpha": 0.72,
+      "beta": 0.48,
+      "theta": 0.32
+    }
+    // ... up to 10 most recent readings
+  ]
   ```
 
 ### Standalone Data Collection
@@ -86,6 +101,10 @@ Key parameters in the code:
 - FFT window: 1000 samples
 - Calibration length: 6 seconds
 - Buffer size: 20 samples for moving calculations
+- History size: 10 most recent readings
+- Process window frequency: 25 Hz
+- Number of channels: 4
+- Spectral normalization: Enabled by bands width
 
 ## Error Handling
 
@@ -94,6 +113,10 @@ The system includes:
 - Exception handling for device connections
 - Automatic resource cleanup
 - Connection state monitoring
+- Battery level monitoring
+- Electrode resistance checking
+- Calibration progress tracking
+- Graceful shutdown handling via atexit
 
 ## Frontend Integration
 

@@ -21,6 +21,9 @@ latest = {
     "theta": 0.0
 }
 
+# Store last 10 readings
+readings_history = []
+
 # Copy your compute_apen and buffers if needed...
 alpha_buffer, beta_buffer, theta_buffer = [], [], []
 math = None  # Will be initialized in bci_thread
@@ -42,7 +45,7 @@ def compute_apen(U, m=2, r=None):
     pass
 
 def on_signal_received(sensor, data):
-    global latest, alpha_buffer, beta_buffer, theta_buffer, math
+    global latest, alpha_buffer, beta_buffer, theta_buffer, math, readings_history
 
     # Process the raw data first
     raw_channels = []
@@ -76,6 +79,11 @@ def on_signal_received(sensor, data):
             latest["alpha"] = spec.alpha
             latest["beta"] = spec.beta
             latest["theta"] = spec.theta
+
+            # Add to history
+            readings_history.append(latest.copy())
+            if len(readings_history) > 10:
+                readings_history.pop(0)
 
 def on_resist_received(sensor, data):
     print("O1 resist is normal: {0}. Current O1 resist {1}".format(data.O1 < 2000000, data.O1))
@@ -196,10 +204,10 @@ threading.Thread(target=bci_thread, daemon=True).start()
 
 @app.route("/api/data")
 def get_data():
-    # Return the latest readings JSON
-    return jsonify(latest)
+    # Return the last 10 readings as JSON
+    return jsonify(readings_history)
 
-if __name__ == "__main__":
+if __name__== "_main_":
     try:
         app.run(debug=False, port=5000)
     except KeyboardInterrupt:
